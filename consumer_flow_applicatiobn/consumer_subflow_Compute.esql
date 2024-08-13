@@ -1,0 +1,28 @@
+
+
+CREATE COMPUTE MODULE consumer_subflow_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE error ROW;
+		DECLARE inref REFERENCE TO InputExceptionList.[<];
+		
+		WHILE ENDSWITH(FIELDNAME(inref),'Exception') DO
+			SET error.catalogMsg=inref.Catalog;
+			
+			DECLARE i INTEGER 1;
+			DECLARE j INTEGER;
+			SET j=CARDINALITY(inref.Insert[]);
+			
+			SET error.MainTextMsg=inref.Text;
+			WHILE i<=j DO
+				SET error.textMsg=inref.Insert[i].Text;
+				SET i=i+1;
+			END WHILE;
+			MOVE inref LASTCHILD;
+		END WHILE;
+		SET error.HTTPstatusCode=InputRoot.HTTPResponseHeader."X-Original-HTTP-Status-Code";
+		RETURN TRUE;
+	END;
+
+	
+END MODULE;
